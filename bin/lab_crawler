@@ -1,0 +1,28 @@
+#!/usr/bin/env ruby
+
+require "bundler/setup"
+require 'octokit'
+require 'open-uri'
+require 'json'
+require 'pry'
+require 'http'
+require 'git'
+require "lab/crawler"
+
+repo_url = ARGV[0]
+path = ARGV[1]
+puts repo_url
+
+repo = nil
+begin
+  repo = Octokit::Repository.from_url(repo_url)
+rescue
+  binding.pry
+end
+
+client = Octokit::Client.new(netrc: true)
+forks = client.forks("#{repo.owner}/#{repo.repo}")
+forks.map do |fork| 
+  fork_url = "https://github.com/#{fork['full_name']}"
+  Git.clone(fork_url, fork.owner.login, path: "#{path}/#{repo.repo}/")
+end
